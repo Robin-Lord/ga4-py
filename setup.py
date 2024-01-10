@@ -5,7 +5,7 @@ setup(
     version="1.0.0",
     description="Python package to simplify adding GA4 tracking to Python functions",
     author="Aira Innovations",
-    packages=["gapy"],
+    packages=["ga4py"],
     install_requires=[
         "ga4mp==2.0.4",
         "requests==2.25.1",

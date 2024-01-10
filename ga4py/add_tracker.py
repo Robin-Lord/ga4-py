@@ -1,6 +1,6 @@
 import os
 from functools import wraps # Properly show docstrings for decorated functions
-import gapy.error_handling as error_handling
+import ga4py.error_handling as error_handling 
 from typing import Tuple, List, Dict, AnyStr
 
 try:

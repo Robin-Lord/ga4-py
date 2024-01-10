@@ -7,7 +7,7 @@ users can use to pass a custom analytics message to GA4.
 
 import os
 import requests
-from typing import AnyStr, List, Tupe, Dict
+from typing import AnyStr, List, Tuple, Dict
 import json
 
 class AnalyticsException(Exception):
