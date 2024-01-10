@@ -45,7 +45,7 @@ Tracking Based on [gtagmp](https://github.com/adswerve/GA4-Measurement-Protocol-
 
 - If you want to be alerted if your tracking function fails for some reason (because it deliberately won't cause the main code to fail). Include the GA4_ERROR_API_ENDPOINT environment variable. The decorator will automatically send a POST request to that url using the requests library. The message will include JSON with a summary of the issue and more detail. You could use that endpoint to send an alert to your chosen monitoring address.
 
-- If you want certain error messages to be sent to GA when we record errors, update your function so that it raises an gapy.error_class.AnalyticsException (class defined in this library) the analytics_message you specify in that error will be passed to your analytics hit as the "error_message" parameter.
+- If you want certain error messages to be sent to GA when we record errors, update your function so that it raises an ga4py.error_class.AnalyticsException (class defined in this library) the analytics_message you specify in that error will be passed to your analytics hit as the "error_message" parameter.
 
 - If you want to mark a hit as a "testing" hit (recommended so you can separate actual 
 user traffic from your team testing the script) you can set an env variable with the name GA4_ANALYTICS_TEST and the value of "TRUE". The decorator will automatically pick that up
