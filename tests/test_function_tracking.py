@@ -1,7 +1,7 @@
 import unittest
 import requests
-import gapy.add_tracker as add_tracker
-import gapy.error_handling as error_handling
+import ga4py.add_tracker as add_tracker
+import ga4py.error_handling as error_handling
 
 @add_tracker.analytics_hit_decorator
 def simple_function_to_track():
@@ -38,8 +38,7 @@ class TestTracking(unittest.TestCase):
         tracking_args_dict = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
             "page_location": "any_location_you_want", 
-            "page_location": "any title you want", 
-            "page_location": "any title you want", 
+            "page_title": "any title you want", 
         }
 
 
@@ -50,8 +49,7 @@ class TestTracking(unittest.TestCase):
         tracking_args_dict = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
             "page_location": "any_location_you_want", 
-            "page_location": "any title you want", 
-            "page_location": "any title you want", 
+            "page_title": "any title you want", 
         }
 
         # The function will raise an error, but first the tracking library will record that error
