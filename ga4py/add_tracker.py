@@ -82,28 +82,36 @@ def analytics_hit_decorator(func):
         # Pull out logging level to know if/what we should print
         logging_level = arg_params.pop("logging_level", "")
 
+        # Allow user to set custom 'stage' to send (will skip start and end)
+        stage = arg_params.pop("stage", "start")
+
+
         try:
             # Send "starting function" hit
-            if "start" not in skip_stage:
+            if stage not in skip_stage:
+                if logging_level == "all":
+                    print(f"Sending {stage} hit")
                 send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
                     event_name = event_name,
-                    stage = "start",
+                    stage = stage,
                     gtag_tracker = None,
                     testing_mode = testing_mode,
                     logging_level=logging_level
                 )
             elif logging_level == "all":
-                print("Skipping sending 'start' tracking hit")
+                print(f"Skipping sending {stage} tracking hit. skip_stage: {skip_stage}")
 
             
             # Run function as normal
             returned_value = func(*args, **kwargs)
 
             # Send success hit now that function is done
-            if "end" not in skip_stage:
+            if "end" not in skip_stage and stage!="start":
+                if logging_level == "all":
+                    print("Sending end hit")
                 send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
@@ -115,7 +123,7 @@ def analytics_hit_decorator(func):
                     logging_level=logging_level
                 )
             elif logging_level == "all":
-                print("Skipping sending 'end' tracking hit")
+                print(f"Skipping sending 'end' tracking hit. skip_stage: {skip_stage} custom_stage: {stage}")
 
             return returned_value
         
@@ -136,7 +144,7 @@ def analytics_hit_decorator(func):
                     logging_level=logging_level
                 )
             elif logging_level == "all":
-                print("Skipping sending 'error' tracking hit")            
+                print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
             
             # Still raise the error
             raise e
@@ -157,7 +165,7 @@ def analytics_hit_decorator(func):
                 )
 
             elif logging_level == "all":
-                print("Skipping sending 'error' tracking hit")
+                print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
 
             # If there's an error we still raise it, we
             # just send an error message to our tracking first
