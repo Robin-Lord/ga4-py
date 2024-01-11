@@ -87,17 +87,23 @@ def analytics_hit_decorator(func):
 
 
         try:
+            tracking_success = True
+
             # Send "starting function" hit
             if stage not in skip_stage:
                 if logging_level == "all":
                     print(f"Sending {stage} hit")
-                send_hit(
+
+                gtag_tracker, tracking_success = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
                     event_name = event_name,
                     stage = stage,
-                    gtag_tracker = None,
+                    gtag_tracker = gtag_tracker, 
+                    # For the time being we don't do anything to
+                    # try to join users up from different script runs
+                    # simpler this way!
                     testing_mode = testing_mode,
                     logging_level=logging_level
                 )
@@ -109,16 +115,20 @@ def analytics_hit_decorator(func):
             returned_value = func(*args, **kwargs)
 
             # Send success hit now that function is done
-            if "end" not in skip_stage and stage!="start":
+            if "end" not in skip_stage \
+                and stage!="start"\
+                and tracking_success:
+                
                 if logging_level == "all":
                     print("Sending end hit")
-                send_hit(
+
+                gtag_tracker, tracking_success = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
                     event_name = event_name,
                     stage = "end",
-                    gtag_tracker = None,
+                    gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
                     logging_level=logging_level
                 )
@@ -131,15 +141,17 @@ def analytics_hit_decorator(func):
             # If function hits an error and user has defined a specific message
             # to send to analytics, use that
 
-            if "error" not in skip_stage:
+            if "error" not in skip_stage \
+                and tracking_success:
+
                 arg_params["error_message"] = e.analytics_message
-                send_hit(
+                gtag_tracker, tracking_success = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
                     event_name = event_name,
                     stage = "error",
-                    gtag_tracker = None,
+                    gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
                     logging_level=logging_level
                 )
@@ -153,13 +165,13 @@ def analytics_hit_decorator(func):
         except Exception as e:
             # Send standard error hit with no specialised message to include
             if "error" not in skip_stage:
-                send_hit(
+                gtag_tracker, tracking_success = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
                     event_name = event_name,
                     stage = "error",
-                    gtag_tracker = None,
+                    gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
                     logging_level=logging_level
                 )
@@ -179,7 +191,7 @@ def analytics_hit_decorator(func):
 
 
 
-def initialise_tracking() -> GtagMP:
+def initialise_tracking(logging_level) -> GtagMP:
     """
     Function to create the tracker we'll continuously use to record activity
 
@@ -189,6 +201,7 @@ def initialise_tracking() -> GtagMP:
 
     Returns:
     - gtag_tracker (tracker object)
+    - success (bool)
 
 
     """
@@ -196,8 +209,24 @@ def initialise_tracking() -> GtagMP:
     storage_dict: Dict = {}
 
     # Get client secret and measurement id from environment variables
-    api_secret: AnyStr = os.getenv("GA4_CLI_SEC")
-    measurement_id: AnyStr = os.getenv("GA4_MID")
+    api_secret: AnyStr = os.getenv("GA4_CLI_SEC", "None")
+    measurement_id: AnyStr = os.getenv("GA4_MID", "None")
+
+    if api_secret == "None" or measurement_id=="None":
+        if logging_level in ["error", "all"]:
+            print(f"""
+    GA4_CLI_SEC: {api_secret}            
+    GA4_MID: {measurement_id}
+
+    To use this tracking library - find your GA4 API secret and GA4 measurement ID and set them
+    as environmental variables.
+
+    For more informationa, look at https://github.com/adswerve/GA4-Measurement-Protocol-Python
+    (which this library is based on).
+                """)
+        
+        # Return showing we can't send hits
+        return GtagMP, False
 
     # Create an instance of GA4 object using gtag
     gtag_tracker: GtagMP = GtagMP(
@@ -213,7 +242,7 @@ def initialise_tracking() -> GtagMP:
     # Overwrite initialising client ID
     gtag_tracker.client_id = client_id
 
-    return gtag_tracker
+    return gtag_tracker, True
 
 @error_handling.handle_analytics_errors
 def send_hit(
@@ -247,6 +276,12 @@ def send_hit(
     - gtag_tracker (tracker object - optional): [default = None)
                                         object used to send hits to GA4
 
+    - logging_level (string - optional): [defaul = all]
+                                        used to dictate how much information is printed, options are
+                                        "error" for just errors
+                                        "all" for everything
+                                        "" for nothing
+
     """
 
     # Importing needed libraries should be handled by handle_errors 
@@ -262,8 +297,12 @@ def send_hit(
         function_name = "unknown"
 
     # If the tracker hasn't been created before - create it
+    success = True
     if gtag_tracker == None:
-        gtag_tracker = initialise_tracking()
+        gtag_tracker, success = initialise_tracking(logging_level)
+
+    if not success:
+        return gtag_tracker, success
 
     dict_to_send = {}
 
@@ -339,4 +378,4 @@ stage: {stage}
               """)
 
     # Return the tracker
-    return gtag_tracker
+    return gtag_tracker, success
