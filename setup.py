@@ -10,4 +10,5 @@ setup(
         "ga4mp==2.0.4",
         "requests==2.25.1",
     ],
+    package_data={'ga4py': ['py.typed']},
 )
