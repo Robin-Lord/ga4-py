@@ -6,7 +6,7 @@ users can use to pass a custom analytics message to GA4.
 
 
 import os
-import requests
+import requests #type: ignore
 from typing import AnyStr, List, Tuple, Dict
 import json
 
@@ -45,6 +45,9 @@ def handle_analytics_errors(func):
         - **kwargs (passed to function and error logging)
         """
 
+        # Get logging level
+        logging_level = kwargs.get("logging_level", "any")
+
         # First see if we can extract the calling function
         try:
             import inspect # Build in, should be present
@@ -64,15 +67,20 @@ def handle_analytics_errors(func):
 
         except Exception as E:
             # If we get an error then the modules aren't installed
-            send_tracking_error_alert(E, calling_function, [args, kwargs])
+            send_tracking_error_alert(
+                error=E, 
+                function=calling_function, 
+                parameters=[args, kwargs],
+                logging_level=logging_level)
 
             # If the modules aren't installed then running the function
             # will throw an error (which will error more crucial code)
             # so instead we just run an error print function
             # that can handle whatever and return
 
-            error = "Modules not installed"
-            print_error_function(error)
+            if logging_level in ["error", "any"]:
+                error = "Modules not installed"
+                print_error_function(error)
             return
 
         # If the modules ARE installed - try running our passed function
@@ -82,9 +90,15 @@ def handle_analytics_errors(func):
 
         except Exception as e:
             # If we hit an error we don't want it to derail our core code
-            print_error_function(e)
 
-            send_tracking_error_alert(e, calling_function, [args, kwargs])
+            if logging_level in ["error", "any"]:
+                print_error_function(e)
+
+            send_tracking_error_alert(
+                error=e, 
+                function=calling_function, 
+                parameters=[args, kwargs],
+                logging_level=logging_level)
 
     return ret_fun
 
@@ -95,7 +109,9 @@ def handle_analytics_errors(func):
 def send_tracking_error_alert(
         error: AnyStr, 
         function: AnyStr, 
-        parameters: List[Dict])->requests.Response: 
+        parameters: List[Dict],
+        logging_level: str = "any"
+        )->requests.Response: 
     """
     
     A function to send errors to our tool monitoring API when our tracking
@@ -107,6 +123,7 @@ def send_tracking_error_alert(
     - error (string): What has caused the problem
     - function (string): The function that was not tracked successfully
     - parameters (list of dicts): The parameters we tried to send to GA4
+    - logging_level (str - optional): [default = "any"] how much we should print
 
     Returns:
     - response (requests.Response object)
@@ -118,22 +135,24 @@ def send_tracking_error_alert(
 
     if api_endpoint == "":
         # If the endpoint url isn't set, just return
-        print("No analytics error endpoint set - skipping")
+        if logging_level in ["error", "any"]:
+            print("No analytics error endpoint set - skipping")
         return
 
 
     # Construct subject line and body (body can use html markup)
-    subject = "Error in tracking function: {} ".format(function)
+    subject = f"Error in tracking function: {function!r} "
 
-    body = """
+    param="<br>" + "<br>".join([str(param) for param in parameters])
+
+    body = f"""
   
-  Error: {err}
+  Error: {error!r}
   <br><br><hr> <br><br>
-  Function parameters: {param}
+  Function parameters: {param!r}
   
-  """.format(
-        err=error, param="<br>" + "<br>".join([str(param) for param in parameters])
-    )
+  """
+    
 
     # Construct json to send
     data = {"subject": subject, "body": body}
@@ -158,6 +177,6 @@ def print_error_function(
     returns:
     - None
     """
-    print("Skipping analytics: {}".format(error))
+    print(f"Skipping analytics: {error!r}")
 
     return

@@ -1,5 +1,5 @@
 import unittest
-import requests
+import requests #type: ignore
 import ga4py.error_handling as error_handling
 import ga4py.add_tracker as add_tracker
 
@@ -31,6 +31,7 @@ class TestError(unittest.TestCase):
         # Deliberately not setting page location to force error
         tracking_args_dict = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
+            "logging_level": "all"
         }
 
         @add_tracker.analytics_hit_decorator
