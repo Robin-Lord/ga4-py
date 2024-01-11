@@ -51,6 +51,8 @@ Tracking Based on [gtagmp](https://github.com/adswerve/GA4-Measurement-Protocol-
 user traffic from your team testing the script) you can set an env variable with the name GA4_ANALYTICS_TEST and the value of "TRUE". The decorator will automatically pick that up
 and include it in tracking hits. 
 
+- You can pass whatever custom parameters you want to the function but if you want to use type checking and are only using the basic expected arguments you can use the class in ga4py/custom_arguments
+
 ### Parameters you could include in your arguments
 
 The below are some suggested paramters you could include in your
@@ -84,3 +86,4 @@ Any other parameters you choose to include!
 ## Examples
 
 For example usage, look in /tests.
+

@@ -12,7 +12,7 @@ except Exception as e:
 def analytics_hit_decorator(func):
     """
     Decorator to add tracking to a function.
-
+ 
     When added to a function, will add a traking ping when the function 
     starts, and one when it ends. 
 

@@ -2,6 +2,7 @@ import unittest
 import requests #type: ignore
 import ga4py.error_handling as error_handling
 import ga4py.add_tracker as add_tracker
+from ga4py.custom_arguments import MeasurementArguments
 
 class TestError(unittest.TestCase):
     
@@ -29,7 +30,7 @@ class TestError(unittest.TestCase):
     def test_standard_error_handling(self):
 
         # Deliberately not setting page location to force error
-        tracking_args_dict = {
+        tracking_args_dict: MeasurementArguments = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
             "logging_level": "all"
         }

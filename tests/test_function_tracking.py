@@ -2,6 +2,7 @@ import unittest
 import requests
 import ga4py.add_tracker as add_tracker
 import ga4py.error_handling as error_handling
+from ga4py.custom_arguments import MeasurementArguments
 
 @add_tracker.analytics_hit_decorator
 def simple_function_to_track():
@@ -35,7 +36,7 @@ class TestTracking(unittest.TestCase):
     
     def test_tracking_function(self):
         print("Basic function tracking")
-        tracking_args_dict = {
+        tracking_args_dict: MeasurementArguments = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
             "page_location": "any_location_you_want", 
             "page_title": "any title you want", 
@@ -47,7 +48,7 @@ class TestTracking(unittest.TestCase):
     
     def test_tracking_function_with_error(self):
         print("Testing error handling")
-        tracking_args_dict = {
+        tracking_args_dict: MeasurementArguments = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
             "page_location": "any_location_you_want", 
             "page_title": "any title you want", 
@@ -63,7 +64,7 @@ class TestTracking(unittest.TestCase):
     
     def test_skipping_stage(self):
         print("Testing stage skip and logging")
-        tracking_args_dict = {
+        tracking_args_dict: MeasurementArguments = {
             "testing_mode": True, # Make sure to either remove this, or to set this to False when you want to actually send hits
             "page_location": "any_location_you_want", 
             "page_title": "any title you want", 
