@@ -75,61 +75,73 @@ def analytics_hit_decorator(func):
         event_name = arg_params.pop("event_name", "pageview")
         testing_mode = arg_params.pop("testing_mode", False)
 
+        # Pull out skip_stage if it exists, if it doesn't just use
+        # an empty list
+        skip_stage = arg_params.pop("skip_stage", [])
+
         try:
             # Send "starting function" hit
-            send_hit(
-                parameter_dictionary = arg_params,
-                page_title = page_title,
-                page_location = page_location,
-                event_name = event_name,
-                stage = "start",
-                gtag_tracker = None,
-                testing_mode = testing_mode,
-            )
+            if "start" not in skip_stage:
+                send_hit(
+                    parameter_dictionary = arg_params,
+                    page_title = page_title,
+                    page_location = page_location,
+                    event_name = event_name,
+                    stage = "start",
+                    gtag_tracker = None,
+                    testing_mode = testing_mode,
+                )
 
             
             # Run function as normal
             returned_value = func(*args, **kwargs)
 
             # Send success hit now that function is done
-            send_hit(
-                parameter_dictionary = arg_params,
-                page_title = page_title,
-                page_location = page_location,
-                event_name = event_name,
-                stage = "end",
-                gtag_tracker = None,
-                testing_mode = testing_mode,
-            )
+            if "end" not in skip_stage:
+                send_hit(
+                    parameter_dictionary = arg_params,
+                    page_title = page_title,
+                    page_location = page_location,
+                    event_name = event_name,
+                    stage = "end",
+                    gtag_tracker = None,
+                    testing_mode = testing_mode,
+                )
 
             return returned_value
         
         except error_handling.AnalyticsException as e:
             # If function hits an error and user has defined a specific message
             # to send to analytics, use that
-            arg_params["error_message"] = e.analytics_message
-            send_hit(
-                parameter_dictionary = arg_params,
-                page_title = page_title,
-                page_location = page_location,
-                event_name = event_name,
-                stage = "error",
-                gtag_tracker = None,
-                testing_mode = testing_mode,
-            )
+
+            if "error" not in skip_stage:
+                arg_params["error_message"] = e.analytics_message
+                send_hit(
+                    parameter_dictionary = arg_params,
+                    page_title = page_title,
+                    page_location = page_location,
+                    event_name = event_name,
+                    stage = "error",
+                    gtag_tracker = None,
+                    testing_mode = testing_mode,
+                )
+            
+            # Still raise the error
+            raise e
 
         
         except Exception as e:
             # Send standard error hit with no specialised message to include
-            send_hit(
-                parameter_dictionary = arg_params,
-                page_title = page_title,
-                page_location = page_location,
-                event_name = event_name,
-                stage = "error",
-                gtag_tracker = None,
-                testing_mode = testing_mode,
-            )
+            if "error" not in skip_stage:
+                send_hit(
+                    parameter_dictionary = arg_params,
+                    page_title = page_title,
+                    page_location = page_location,
+                    event_name = event_name,
+                    stage = "error",
+                    gtag_tracker = None,
+                    testing_mode = testing_mode,
+                )
 
 
             # If there's an error we still raise it, we
