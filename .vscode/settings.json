@@ -3,6 +3,7 @@
         "tests",
         "dependencies",
         "decorator",
-        "logging"
+        "logging",
+        "error_handling"
     ]
 }

@@ -52,6 +52,9 @@ def analytics_hit_decorator(func):
     @wraps(func) # Make sure docstring comes through properly
     def wrapper(*args, **kwargs):
 
+        # Get the name of the function we're tracking (useful for error handling)
+        func_name = func.__name__
+
         arg_params = {}
 
         if kwargs != None:
@@ -105,7 +108,8 @@ def analytics_hit_decorator(func):
                     # try to join users up from different script runs
                     # simpler this way!
                     testing_mode = testing_mode,
-                    logging_level=logging_level
+                    logging_level=logging_level,
+                    func_name = func_name
                 )
             elif logging_level == "all":
                 print(f"Skipping sending {stage} tracking hit. skip_stage: {skip_stage}")
@@ -130,7 +134,8 @@ def analytics_hit_decorator(func):
                     stage = "end",
                     gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
-                    logging_level=logging_level
+                    logging_level=logging_level,
+                    func_name = func_name
                 )
             elif logging_level == "all":
                 print(f"Skipping sending 'end' tracking hit. skip_stage: {skip_stage} custom_stage: {stage}")
@@ -153,7 +158,8 @@ def analytics_hit_decorator(func):
                     stage = "error",
                     gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
-                    logging_level=logging_level
+                    logging_level=logging_level,
+                    func_name = func_name
                 )
             elif logging_level == "all":
                 print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
@@ -173,7 +179,8 @@ def analytics_hit_decorator(func):
                     stage = "error",
                     gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
-                    logging_level=logging_level
+                    logging_level=logging_level,
+                    func_name = func_name
                 )
 
             elif logging_level == "all":
@@ -253,7 +260,8 @@ def send_hit(
     stage="unknown",
     gtag_tracker=None,
     testing_mode=False,
-    logging_level="all"
+    logging_level="all",
+    func_name = "unknown"
 ):
     """
     Function to handle sending an analytics hit to GA4
@@ -287,15 +295,6 @@ def send_hit(
     # Importing needed libraries should be handled by handle_errors 
     # decorator 
 
-    #  Try to figure out the name of the function we're running
-    function_name = ""
-    try:
-        import inspect
-
-        function_name = inspect.stack()[2].function
-    except:
-        function_name = "unknown"
-
     # If the tracker hasn't been created before - create it
     success = True
     if gtag_tracker == None:
@@ -311,7 +310,7 @@ def send_hit(
         # If we have - send an error
         error_handling.send_tracking_error_alert(
             error="Too many parameters", 
-            function=function_name, 
+            function=func_name, 
             parameters=parameter_dictionary
         )
 
@@ -343,7 +342,7 @@ def send_hit(
     if page_location == None:
         error_handling.send_tracking_error_alert(
             error="No page location set", 
-            function=function_name, 
+            function=func_name, 
             parameters=parameter_dictionary
         )
         page_location = "unknown"
