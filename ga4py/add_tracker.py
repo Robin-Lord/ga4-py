@@ -100,7 +100,7 @@ def analytics_hit_decorator(func):
                     page_location = page_location,
                     event_name = event_name,
                     stage = stage,
-                    gtag_tracker = gtag_tracker, 
+                    gtag_tracker = None, 
                     # For the time being we don't do anything to
                     # try to join users up from different script runs
                     # simpler this way!
