@@ -2,6 +2,7 @@
     "conventionalCommits.scopes": [
         "tests",
         "dependencies",
-        "decorator"
+        "decorator",
+        "logging"
     ]
 }

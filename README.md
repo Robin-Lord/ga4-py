@@ -65,6 +65,8 @@ For [more information check the GA4 documentation.](https://developers.google.co
 
 "skip_stage" (list): normally the decorator will automatically send one tracking hit with a stage of "start" before your function runs, one with the stage of "end" when your function completes, and one with the stage of "error". If you include a "skip_stage" item in this dictionary then the decorator will automatically skip sending that stage of hit. This is useful if, for example, you have function that runs repeatedly (say a Streamlit app) and you only want to trigger the start function once when it loads and the end function once when it completes. To skip the start stage include {skip_stage: ["start"]} 
 
+"logging_level" (string): normally the decorator won't automatically print out descriptions of what it is doing and why. If you want it to print out the reasons for errors then pass {logging_level: "error"} if you want it to log all updates then pass {logging_level: "all"}
+
 "page_title" (string): the name of the page title that should show up in GA4, if not set it'll just be the page location but with any underscores or hyphens replaced with a space
 
 "event_name" (string): the name of the event in GA4, if not set this will default to "pageview"

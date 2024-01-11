@@ -79,6 +79,9 @@ def analytics_hit_decorator(func):
         # an empty list
         skip_stage = arg_params.pop("skip_stage", [])
 
+        # Pull out logging level to know if/what we should print
+        logging_level = arg_params.pop("logging_level", "")
+
         try:
             # Send "starting function" hit
             if "start" not in skip_stage:
@@ -90,7 +93,10 @@ def analytics_hit_decorator(func):
                     stage = "start",
                     gtag_tracker = None,
                     testing_mode = testing_mode,
+                    logging_level=logging_level
                 )
+            elif logging_level == "all":
+                print("Skipping sending 'start' tracking hit")
 
             
             # Run function as normal
@@ -106,7 +112,10 @@ def analytics_hit_decorator(func):
                     stage = "end",
                     gtag_tracker = None,
                     testing_mode = testing_mode,
+                    logging_level=logging_level
                 )
+            elif logging_level == "all":
+                print("Skipping sending 'end' tracking hit")
 
             return returned_value
         
@@ -124,7 +133,10 @@ def analytics_hit_decorator(func):
                     stage = "error",
                     gtag_tracker = None,
                     testing_mode = testing_mode,
+                    logging_level=logging_level
                 )
+            elif logging_level == "all":
+                print("Skipping sending 'error' tracking hit")            
             
             # Still raise the error
             raise e
@@ -141,8 +153,11 @@ def analytics_hit_decorator(func):
                     stage = "error",
                     gtag_tracker = None,
                     testing_mode = testing_mode,
+                    logging_level=logging_level
                 )
 
+            elif logging_level == "all":
+                print("Skipping sending 'error' tracking hit")
 
             # If there's an error we still raise it, we
             # just send an error message to our tracking first
@@ -170,14 +185,14 @@ def initialise_tracking() -> GtagMP:
 
     """
 
-    storage_dict = {}
+    storage_dict: Dict = {}
 
     # Get client secret and measurement id from environment variables
-    api_secret = os.getenv("GA4_CLI_SEC")
-    measurement_id = os.getenv("GA4_MID")
+    api_secret: AnyStr = os.getenv("GA4_CLI_SEC")
+    measurement_id: AnyStr = os.getenv("GA4_MID")
 
     # Create an instance of GA4 object using gtag
-    gtag_tracker = GtagMP(
+    gtag_tracker: GtagMP = GtagMP(
         api_secret = api_secret,
         client_id = "initial",
         measurement_id = measurement_id,
@@ -185,7 +200,7 @@ def initialise_tracking() -> GtagMP:
 
     # Create a random client id
     # (for now - may come up with a better use for users in future)
-    client_id = gtag_tracker.random_client_id()
+    client_id: AnyStr = gtag_tracker.random_client_id()
 
     # Overwrite initialising client ID
     gtag_tracker.client_id = client_id
@@ -201,6 +216,7 @@ def send_hit(
     stage="unknown",
     gtag_tracker=None,
     testing_mode=False,
+    logging_level="all"
 ):
     """
     Function to handle sending an analytics hit to GA4
@@ -247,7 +263,9 @@ def send_hit(
     if len(parameter_dictionary.keys()) > 10:
         # If we have - send an error
         error_handling.send_tracking_error_alert(
-            "Too many parameters", function_name, parameter_dictionary
+            error="Too many parameters", 
+            function=function_name, 
+            parameters=parameter_dictionary
         )
 
         # And then just take a selection of parameters
@@ -277,7 +295,9 @@ def send_hit(
     # Check if we've got a page_title or location key set
     if page_location == None:
         error_handling.send_tracking_error_alert(
-            "No page location set", function_name, parameter_dictionary
+            error="No page location set", 
+            function=function_name, 
+            parameters=parameter_dictionary
         )
         page_location = "unknown"
 
