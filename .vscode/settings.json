@@ -1,5 +1,9 @@
 {
     "conventionalCommits.scopes": [
-        "tests"
+        "tests",
+        "dependencies",
+        "decorator",
+        "logging",
+        "error_handling"
     ]
 }
