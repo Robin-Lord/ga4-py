@@ -92,6 +92,8 @@ def analytics_hit_decorator(func):
         try:
             tracking_success = True
 
+            gtag_tracker = None
+
             # Send "starting function" hit
             if stage not in skip_stage:
                 if logging_level == "all":
@@ -103,7 +105,7 @@ def analytics_hit_decorator(func):
                     page_location = page_location,
                     event_name = event_name,
                     stage = stage,
-                    gtag_tracker = None, 
+                    gtag_tracker = gtag_tracker, 
                     # For the time being we don't do anything to
                     # try to join users up from different script runs
                     # simpler this way!
@@ -148,6 +150,10 @@ def analytics_hit_decorator(func):
 
             if "error" not in skip_stage \
                 and tracking_success:
+
+                # Avoid error where gtag_tracker is referenced before being set
+                if "gtag_tracker" not in locals():
+                    gtag_tracker = None
 
                 arg_params["error_message"] = e.analytics_message
                 gtag_tracker, tracking_success = send_hit(
