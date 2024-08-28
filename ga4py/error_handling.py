@@ -4,11 +4,11 @@ fail gracefully without taking down main code, and a custom AnalyticsException c
 users can use to pass a custom analytics message to GA4.
 """
 
-
 import os
-import requests #type: ignore
+import requests  # type: ignore
 from typing import AnyStr, List, Tuple, Dict
 import json
+
 
 class AnalyticsException(Exception):
     def __init__(self, message, analytics_message):
@@ -50,7 +50,7 @@ def handle_analytics_errors(func):
 
         # First see if we can extract the calling function
         try:
-            import inspect # Build in, should be present
+            import inspect  # Build in, should be present
 
             # Get the name of the function that called this one
             calling_function = inspect.stack()[1].function
@@ -62,16 +62,17 @@ def handle_analytics_errors(func):
 
         # First check that modules are installed
         try:
-            from ga4mp import GtagMP # type: ignore
-            from ga4mp.store import DictStore # type: ignore
+            from ga4mp import GtagMP  # type: ignore
+            from ga4mp.store import DictStore  # type: ignore
 
         except Exception as E:
             # If we get an error then the modules aren't installed
             send_tracking_error_alert(
-                error=E, 
-                function=calling_function, 
+                error=E,
+                function=calling_function,
                 parameters=[args, kwargs],
-                logging_level=logging_level)
+                logging_level=logging_level,
+            )
 
             # If the modules aren't installed then running the function
             # will throw an error (which will error more crucial code)
@@ -95,25 +96,20 @@ def handle_analytics_errors(func):
                 print_error_function(e)
 
             send_tracking_error_alert(
-                error=e, 
-                function=calling_function, 
+                error=e,
+                function=calling_function,
                 parameters=[args, kwargs],
-                logging_level=logging_level)
+                logging_level=logging_level,
+            )
 
     return ret_fun
 
 
-
-
-
 def send_tracking_error_alert(
-        error: AnyStr, 
-        function: AnyStr, 
-        parameters: List[Dict],
-        logging_level: str = "any"
-        )->requests.Response: 
+    error: AnyStr, function: AnyStr, parameters: List[Dict], logging_level: str = "any"
+) -> requests.Response:
     """
-    
+
     A function to send errors to our tool monitoring API when our tracking
     fails. (Importantly, this does not hit the error API when the main code
     fails, it's just a way to know if the measurement tracking is hitting issues).
@@ -136,14 +132,14 @@ def send_tracking_error_alert(
     if api_endpoint == "":
         # If the endpoint url isn't set, just return
         if logging_level in ["error", "any"]:
-            print("No analytics error endpoint set - skipping")
+            print("No analytics error endpoint set - skipping sent")
+            print(f"Analytics error: {error}")
         return
-
 
     # Construct subject line and body (body can use html markup)
     subject = f"Error in tracking function: {function!r} "
 
-    param="<br>" + "<br>".join([str(param) for param in parameters])
+    param = "<br>" + "<br>".join([str(param) for param in parameters])
 
     body = f"""
   
@@ -152,7 +148,6 @@ def send_tracking_error_alert(
   Function parameters: {param!r}
   
   """
-    
 
     # Construct json to send
     data = {"subject": subject, "body": body}
@@ -165,8 +160,7 @@ def send_tracking_error_alert(
     return r
 
 
-def print_error_function(
-        error: AnyStr):
+def print_error_function(error: AnyStr):
     """Function to tell user why analytics isn't running
     Likely won't care!
 
