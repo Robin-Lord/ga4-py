@@ -8,7 +8,7 @@ setup(
     packages=["ga4py"],
     install_requires=[
         "ga4mp==2.0.4",
-        "requests==2.25.1",
+        "requests==2.4.2",
     ],
     package_data={'ga4py': ['py.typed']},
 )
