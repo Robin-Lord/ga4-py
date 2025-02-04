@@ -97,7 +97,7 @@ def analytics_hit_decorator(func):
                 if logging_level == "all":
                     print(f"Sending {stage} hit")
 
-                gtag_tracker, tracking_success = send_hit(
+                response = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
@@ -111,6 +111,10 @@ def analytics_hit_decorator(func):
                     logging_level=logging_level,
                     func_name = func_name
                 )
+
+                if isinstance(response, tuple) and len(response)==2:
+                    gtag_tracker, tracking_success = response[0], response[1]
+            
             elif logging_level == "all":
                 print(f"Skipping sending {stage} tracking hit. skip_stage: {skip_stage}")
 
@@ -126,7 +130,7 @@ def analytics_hit_decorator(func):
                 if logging_level == "all":
                     print("Sending end hit")
 
-                gtag_tracker, tracking_success = send_hit(
+                response = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
@@ -137,6 +141,10 @@ def analytics_hit_decorator(func):
                     logging_level=logging_level,
                     func_name = func_name
                 )
+                    
+                if isinstance(response, tuple) and len(response)==2:
+                    gtag_tracker, tracking_success = response[0], response[1]
+                    
             elif logging_level == "all":
                 print(f"Skipping sending 'end' tracking hit. skip_stage: {skip_stage} custom_stage: {stage}")
 
@@ -150,7 +158,7 @@ def analytics_hit_decorator(func):
                 and tracking_success:
 
                 arg_params["error_message"] = e.analytics_message
-                gtag_tracker, tracking_success = send_hit(
+                response = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
@@ -161,6 +169,9 @@ def analytics_hit_decorator(func):
                     logging_level=logging_level,
                     func_name = func_name
                 )
+                if isinstance(response, tuple) and len(response)==2:
+                    gtag_tracker, tracking_success = response[0], response[1]
+                    
             elif logging_level == "all":
                 print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
             
@@ -171,7 +182,7 @@ def analytics_hit_decorator(func):
         except Exception as e:
             # Send standard error hit with no specialised message to include
             if "error" not in skip_stage:
-                gtag_tracker, tracking_success = send_hit(
+                response = send_hit(
                     parameter_dictionary = arg_params,
                     page_title = page_title,
                     page_location = page_location,
@@ -182,6 +193,9 @@ def analytics_hit_decorator(func):
                     logging_level=logging_level,
                     func_name = func_name
                 )
+                
+                if isinstance(response, tuple) and len(response)==2:
+                    gtag_tracker, tracking_success = response[0], response[1]
 
             elif logging_level == "all":
                 print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
