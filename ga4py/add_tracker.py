@@ -1,5 +1,5 @@
 import os
-from functools import wraps # Properly show docstrings for decorated functions
+from functools import wraps  # Properly show docstrings for decorated functions
 import ga4py.error_handling as error_handling
 from typing import Tuple, List, Dict, AnyStr
 
@@ -12,14 +12,14 @@ except Exception as e:
 def analytics_hit_decorator(func):
     """
     Decorator to add tracking to a function.
- 
-    When added to a function, will add a traking ping when the function 
-    starts, and one when it ends. 
+
+    When added to a function, will add a traking ping when the function
+    starts, and one when it ends.
 
     function parameters:
         - ga4py_args_remove (dictionary - optional): [default None] arguments to
                                                 pass to GA4, this parameter will
-                                                be removed before calling the 
+                                                be removed before calling the
                                                 decorated function. For some examples
                                                 or options you could include in your
                                                 dictionary, look at the readme file for this library.
@@ -32,24 +32,24 @@ def analytics_hit_decorator(func):
                                                 dictionary, look at the readme file for this library.
 
 
-    
+
 
     environment parameters to set:
         - GA4_CLI_SEC (environment variable): GA4 API client secret, see here for more: https://github.com/adswerve/GA4-Measurement-Protocol-Python
 
         - GA4_MID (environment variable): GA4 measurement id, see here for more: https://github.com/adswerve/GA4-Measurement-Protocol-Python
 
-        - GA4_ERROR_API_ENDPOINT (environment variable - optional): A url to send an error message to if the analytics fails 
-                                                                    (if you don't set this env variable leave blank then the analytics will just 
+        - GA4_ERROR_API_ENDPOINT (environment variable - optional): A url to send an error message to if the analytics fails
+                                                                    (if you don't set this env variable leave blank then the analytics will just
                                                                     fail silently to avoid disrupting the crucial thread)
 
         - GA4_ANALYTICS_TEST (environment variable - optional): A flag for if you are testing the code, this won't stop analytics hits from being
-                                                                    sent, but will automatically include a parameter in the GA4  hit so you can 
+                                                                    sent, but will automatically include a parameter in the GA4  hit so you can
                                                                     filter out testing events (the parameter name will be "testing" and the value will be
                                                                     "TRUE")
     """
 
-    @wraps(func) # Make sure docstring comes through properly
+    @wraps(func)  # Make sure docstring comes through properly
     def wrapper(*args, **kwargs):
 
         # Get the name of the function we're tracking (useful for error handling)
@@ -71,7 +71,6 @@ def analytics_hit_decorator(func):
         if testing_flag == "TRUE":
             arg_params["testing"] = testing_flag
 
-        
         # Pull out key information from the dictionary
         page_title = arg_params.pop("page_title", "")
         page_location = arg_params.pop("page_location", None)
@@ -88,6 +87,7 @@ def analytics_hit_decorator(func):
         # Allow user to set custom 'stage' to send (will skip start and end)
         stage = arg_params.pop("stage", "start")
 
+        gtag_tracker = None  # Defensive so that can't take down code by skipping stages
 
         try:
             tracking_success = True
@@ -107,26 +107,25 @@ def analytics_hit_decorator(func):
                     # For the time being we don't do anything to
                     # try to join users up from different script runs
                     # simpler this way!
-                    testing_mode = testing_mode,
+                    testing_mode=testing_mode,
                     logging_level=logging_level,
-                    func_name = func_name
+                    func_name=func_name,
                 )
 
                 if isinstance(response, tuple) and len(response)==2:
                     gtag_tracker, tracking_success = response[0], response[1]
             
             elif logging_level == "all":
-                print(f"Skipping sending {stage} tracking hit. skip_stage: {skip_stage}")
+                print(
+                    f"Skipping sending {stage} tracking hit. skip_stage: {skip_stage}"
+                )
 
-            
             # Run function as normal
             returned_value = func(*args, **kwargs)
 
             # Send success hit now that function is done
-            if "end" not in skip_stage \
-                and stage!="start"\
-                and tracking_success:
-                
+            if "end" not in skip_stage and stage != "start" and tracking_success:
+
                 if logging_level == "all":
                     print("Sending end hit")
 
@@ -139,23 +138,24 @@ def analytics_hit_decorator(func):
                     gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
                     logging_level=logging_level,
-                    func_name = func_name
+                    func_name=func_name,
                 )
                     
                 if isinstance(response, tuple) and len(response)==2:
                     gtag_tracker, tracking_success = response[0], response[1]
                     
             elif logging_level == "all":
-                print(f"Skipping sending 'end' tracking hit. skip_stage: {skip_stage} custom_stage: {stage}")
+                print(
+                    f"Skipping sending 'end' tracking hit. skip_stage: {skip_stage} custom_stage: {stage}"
+                )
 
             return returned_value
-        
+
         except error_handling.AnalyticsException as e:
             # If function hits an error and user has defined a specific message
             # to send to analytics, use that
 
-            if "error" not in skip_stage \
-                and tracking_success:
+            if "error" not in skip_stage and tracking_success:
 
                 arg_params["error_message"] = e.analytics_message
                 response = send_hit(
@@ -167,18 +167,19 @@ def analytics_hit_decorator(func):
                     gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
                     logging_level=logging_level,
-                    func_name = func_name
+                    func_name=func_name,
                 )
                 if isinstance(response, tuple) and len(response)==2:
                     gtag_tracker, tracking_success = response[0], response[1]
                     
             elif logging_level == "all":
-                print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
-            
+                print(
+                    f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}"
+                )
+
             # Still raise the error
             raise e
 
-        
         except Exception as e:
             # Send standard error hit with no specialised message to include
             if "error" not in skip_stage:
@@ -191,25 +192,22 @@ def analytics_hit_decorator(func):
                     gtag_tracker = gtag_tracker,
                     testing_mode = testing_mode,
                     logging_level=logging_level,
-                    func_name = func_name
+                    func_name=func_name,
                 )
                 
                 if isinstance(response, tuple) and len(response)==2:
                     gtag_tracker, tracking_success = response[0], response[1]
 
             elif logging_level == "all":
-                print(f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}")        
+                print(
+                    f"Skipping sending 'error' tracking hit. skip_stage: {skip_stage}"
+                )
 
             # If there's an error we still raise it, we
             # just send an error message to our tracking first
             raise e
-    
 
     return wrapper
-
-
-
-
 
 
 def initialise_tracking(logging_level) -> GtagMP:
@@ -233,9 +231,10 @@ def initialise_tracking(logging_level) -> GtagMP:
     api_secret: AnyStr = os.getenv("GA4_CLI_SEC", "None")
     measurement_id: AnyStr = os.getenv("GA4_MID", "None")
 
-    if api_secret == "None" or measurement_id=="None":
+    if api_secret == "None" or measurement_id == "None":
         if logging_level in ["error", "all"]:
-            print(f"""
+            print(
+                f"""
     GA4_CLI_SEC: {api_secret}            
     GA4_MID: {measurement_id}
 
@@ -244,16 +243,17 @@ def initialise_tracking(logging_level) -> GtagMP:
 
     For more informationa, look at https://github.com/adswerve/GA4-Measurement-Protocol-Python
     (which this library is based on).
-                """)
-        
+                """
+            )
+
         # Return showing we can't send hits
         return GtagMP, False
 
     # Create an instance of GA4 object using gtag
     gtag_tracker: GtagMP = GtagMP(
-        api_secret = api_secret,
-        client_id = "initial",
-        measurement_id = measurement_id,
+        api_secret=api_secret,
+        client_id="initial",
+        measurement_id=measurement_id,
     )
 
     # Create a random client id
@@ -265,6 +265,7 @@ def initialise_tracking(logging_level) -> GtagMP:
 
     return gtag_tracker, True
 
+
 @error_handling.handle_analytics_errors
 def send_hit(
     parameter_dictionary,
@@ -275,7 +276,7 @@ def send_hit(
     gtag_tracker=None,
     testing_mode=False,
     logging_level="all",
-    func_name = "unknown"
+    func_name="unknown",
 ):
     """
     Function to handle sending an analytics hit to GA4
@@ -291,7 +292,7 @@ def send_hit(
 
     - event_name (string - optional): [default = pageview] the event type to show in GA4
 
-    - event_name (string - optional): [default = unknown] 
+    - event_name (string - optional): [default = unknown]
                                         used to categorise which point we're at in the script running)
                                         expected values are start, end, error but other values allowed
 
@@ -306,8 +307,8 @@ def send_hit(
 
     """
 
-    # Importing needed libraries should be handled by handle_errors 
-    # decorator 
+    # Importing needed libraries should be handled by handle_errors
+    # decorator
 
     # If the tracker hasn't been created before - create it
     success = True
@@ -323,9 +324,9 @@ def send_hit(
     if len(parameter_dictionary.keys()) > 10:
         # If we have - send an error
         error_handling.send_tracking_error_alert(
-            error="Too many parameters", 
-            function=func_name, 
-            parameters=parameter_dictionary
+            error="Too many parameters",
+            function=func_name,
+            parameters=parameter_dictionary,
         )
 
         # And then just take a selection of parameters
@@ -355,9 +356,9 @@ def send_hit(
     # Check if we've got a page_title or location key set
     if page_location == None:
         error_handling.send_tracking_error_alert(
-            error="No page location set", 
-            function=func_name, 
-            parameters=parameter_dictionary
+            error="No page location set",
+            function=func_name,
+            parameters=parameter_dictionary,
         )
         page_location = "unknown"
 
@@ -379,7 +380,8 @@ def send_hit(
     else:
         # If not testing mode then skip sending the hit but still
         # respond with what we were GOING to send so we can check
-        print(f"""
+        print(
+            f"""
               
 Testing mode - no hit sent, tracking parameters:
               
@@ -388,7 +390,8 @@ page_title: {page_title},
 page_location: {page_location}
 event_name: {event_name}
 stage: {stage} 
-              """)
+              """
+        )
 
     # Return the tracker
     return gtag_tracker, success
